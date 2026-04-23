@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - FCIS Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #f43f5e;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .logo { font-weight: 700; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        
+        .logout-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .logout-btn:hover { opacity: 0.9; transform: scale(0.98); }
+
+        /* Main Container */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 20px; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.875rem; font-weight: 600; text-transform: uppercase; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary); margin-top: 5px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            background: #e2e8f0;
+            padding: 5px;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            width: fit-content;
+        }
+
+        .tab {
+            padding: 10px 24px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tab.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Content Sections */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-main); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; color: var(--text-muted); border-bottom: 2px solid #f1f5f9; }
+        td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .enroll-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo"><span>🎓</span> FCIS PORTAL</div>
+        <div class="user-info">
+            <div style="text-align: right;">
+                <div id="userName" style="font-weight: 700;">Loading...</div>
+                <div id="userUniversityId" style="font-size: 0.8rem; color: var(--text-muted);">ID: ---</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Enrolled Courses</span>
+                <span class="stat-value" id="coursesCount">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Academic Standing</span>
+                <span class="stat-value" id="standing">Student</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('myCourses')">My Courses</button>
+            <button class="tab" onclick="switchTab('enroll')">Registration</button>
+            <button class="tab" onclick="switchTab('grades')">Grades</button>
+        </div>
+
+        <div id="myCoursesTab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">📚 Enrolled Subjects</div>
+                <div id="coursesList">Loading subjects...</div>
+            </div>
+        </div>
+
+        <div id="enrollTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">➕ Available for Registration</div>
+                <div id="availableCoursesList">Checking availability...</div>
+            </div>
+        </div>
+
+        <div id="gradesTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">📊 Grade Report</div>
+                <div id="gradesList">Loading grades...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentUser = null;
+
+        // Initialize Page
+        async function init() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) { logout(); return; }
+            
+            currentUser = JSON.parse(userStr);
+            document.getElementById('userName').innerText = currentUser.name;
+            document.getElementById('userUniversityId').innerText = `ID: ${currentUser.universityId}`;
+            
+            loadEnrolledCourses();
+        }
+
+        // 1. Fetch Enrolled Courses
+        async function loadEnrolledCourses() {
+            try {
+                const res = await fetch(`${API_BASE}/student/${currentUser._id}/courses`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('coursesCount').innerText = data.courses.length;
+                    renderCoursesTable(data.courses);
+                }
+            } catch (err) {
+                document.getElementById('coursesList').innerHTML = "Failed to load subjects.";
+            }
+        }
+
+        function renderCoursesTable(courses) {
+            if(!courses.length) {
+                document.getElementById('coursesList').innerHTML = "<p>No courses registered.</p>";
+                return;
+            }
+            let html = `<table><thead><tr><th>Course Title</th><th>Code</th></tr></thead><tbody>`;
+            courses.forEach(c => {
+                html += `<tr>
+                    <td><strong>${c.title}</strong></td>
+                    <td><code>${c.code}</code></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('coursesList').innerHTML = html;
+        }
+
+        // 2. Fetch Available Courses
+        async function loadAvailableCourses() {
+            try {
+                const res = await fetch(`${API_BASE}/student/${currentUser._id}/available-courses`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    let html = `<table><thead><tr><th>Course</th><th>Code</th><th>Action</th></tr></thead><tbody>`;
+                    data.courses.forEach(c => {
+                        html += `<tr>
+                            <td>${c.title}</td>
+                            <td>${c.code}</td>
+                            <td><button class="enroll-btn" onclick="enrollCourse('${c._id}')">Register</button></td>
+                        </tr>`;
+                    });
+                    html += `</tbody></table>`;
+                    document.getElementById('availableCoursesList').innerHTML = data.courses.length ? html : "All courses are already registered.";
+                }
+            } catch (err) {
+                document.getElementById('availableCoursesList').innerHTML = "Error fetching courses.";
+            }
+        }
+
+        // 3. NEW: Fetch Grades from Grade Model
+        async function loadGrades() {
+            try {
+                const res = await fetch(`${API_BASE}/student/${currentUser._id}/grades`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    let html = `<table>
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Type</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                    
+                    data.grades.forEach(g => {
+                        const percentage = ((g.grade / g.totalGrade) * 100).toFixed(1);
+                        html += `<tr>
+                            <td>${g.courseId?.title || 'Unknown Course'}</td>
+                            <td><span style="color:var(--primary); font-weight:600;">${g.type}</span></td>
+                            <td>${g.grade} / ${g.totalGrade}</td>
+                            <td><strong>${percentage}%</strong></td>
+                        </tr>`;
+                    });
+
+                    document.getElementById('gradesList').innerHTML = data.grades.length ? html + `</tbody></table>` : "No grades posted yet.";
+                }
+            } catch (e) { 
+                document.getElementById('gradesList').innerHTML = "Error loading grades."; 
+            }
+        }
+
+        // 4. Register for a Course (POST)
+        async function enrollCourse(courseId) {
+            try {
+                const res = await fetch(`${API_BASE}/student/enroll`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        studentId: currentUser._id, 
+                        courseId: courseId,
+                        semester: "Fall 2024" 
+                    })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert("Course Registered Successfully!");
+                    loadEnrolledCourses();
+                    loadAvailableCourses();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert("Connection Error.");
+            }
+        }
+
+        // 5. Updated Tab Switcher
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+
+            // Trigger specific load functions based on tab
+            if(tabName === 'enroll') loadAvailableCourses();
+            if(tabName === 'myCourses') loadEnrolledCourses();
+            if(tabName === 'grades') loadGrades();
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بحث عن طالب</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+        .search-box button {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #764ba2;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+        .result {
+            margin-top: 20px;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: right;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="advisor-dashboard.html" class="back-btn">← العودة للوحة التحكم</a>
+        
+        <div class="card">
+            <h3>🔍 البحث عن طالب</h3>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="أدخل الكود الجامعي">
+                <button onclick="searchStudent()">بحث</button>
+            </div>
+        </div>
+
+        <div id="result" class="card result">
+            <h3>📋 بيانات الطالب</h3>
+            <div id="studentData"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        async function searchStudent() {
+            const universityId = document.getElementById('searchInput').value;
+            if (!universityId) {
+                alert('أدخل الكود الجامعي');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/search-student/${universityId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResult(data);
+                } else {
+                    alert('الطالب غير موجود');
+                    document.getElementById('result').style.display = 'none';
+                }
+            } catch (error) {
+                alert('خطأ في البحث');
+            }
+        }
+
+        function displayResult(data) {
+            document.getElementById('result').style.display = 'block';
+            
+            let html = `
+                <p><strong>الاسم:</strong> ${data.user.name}</p>
+                <p><strong>الكود الجامعي:</strong> ${data.user.universityId}</p>
+                <p><strong>البريد:</strong> ${data.user.email}</p>
+                
+                <h4>الدرجات</h4>
+                <table>
+                    <tr><th>المادة</th><th>الدرجة</th></tr>
+            `;
+            
+            (data.grades || []).forEach(g => {
+                let course = g.courseId || {};
+                html += `<tr><td>${course.title || 'غير معروف'}</td><td>${g.grade || 0}</td></tr>`;
+            });
+            
+            html += `</table>
+                <h4>الحضور</h4>
+                <table>
+                    <tr><th>المادة</th><th>التاريخ</th><th>الحالة</th></tr>
+            `;
+            
+            (data.attendance || []).forEach(a => {
+                let course = a.courseId || {};
+                let date = a.date ? new Date(a.date).toLocaleDateString('ar-EG') : 'غير محدد';
+                html += `<tr><td>${course.title || 'غير معروف'}</td><td>${date}</td><td>${a.status === 'Present' ? 'حاضر' : 'غائب'}</td></tr>`;
+            });
+            
+            html += `</table>`;
+            document.getElementById('studentData').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
